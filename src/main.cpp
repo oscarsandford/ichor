@@ -3,16 +3,18 @@
 #include <list>
 
 #define WHITE {255, 255, 255, 255}
+#define OFF_WHITE {242, 242, 242, 255}
 #define BLACK {0, 0, 0, 255}
 #define RED {255, 0, 0, 255}
 #define GREEN {0, 255, 0, 255}
 #define BLUE {0, 0, 255, 255}
 
-struct Line {
-	int x1,y1,x2,y2;
-};
 struct Color {
 	uint8_t r,g,b,a;
+};
+struct Line {
+	int x1,y1,x2,y2;
+	Color color;
 };
 
 
@@ -41,19 +43,26 @@ public:
 	
 	void draw(int x, int y, int x2, int y2)
 	{
+		SDL_SetRenderDrawColor(renderer, pen_color.r, pen_color.g, pen_color.b, pen_color.a);
 		SDL_RenderDrawLine(renderer, x, y, x2, y2);
+	}
+
+	void pen_toggle()
+	{
+		pen_color = BLUE;
+		std::cout << "Changed colour" << std::endl;
 	}
 
 	void clear()
 	{
 		SDL_SetRenderDrawColor(renderer, bg_color.r, bg_color.g, bg_color.b, bg_color.a);
 	        SDL_RenderClear(renderer);
-		SDL_SetRenderDrawColor(renderer, pen_color.r, pen_color.g, pen_color.b, pen_color.a);
 	}
 
 	void update(std::list<Line> &li)
 	{
 		for (auto const &l : li) {
+			SDL_SetRenderDrawColor(renderer, l.color.r, l.color.g, l.color.b, l.color.a);
 			SDL_RenderDrawLine(renderer, l.x1, l.y1, l.x2, l.y2);
 		}
 	}
@@ -62,13 +71,13 @@ public:
 	{
 		SDL_RenderPresent(renderer);
 	}
-	
+	Color pen_color = RED;
+
 private:
 	int height, width;
-	Color bg_color = {242, 242, 242, 255};
-	Color pen_color = RED;
-	SDL_Window *window = NULL;
-	SDL_Renderer *renderer = NULL;
+	Color bg_color = OFF_WHITE;
+	SDL_Window *window;
+	SDL_Renderer *renderer;
 };
 
 int main(int argc, char *argv[]) 
@@ -100,7 +109,7 @@ int main(int argc, char *argv[])
 			}
 			// Unclick event.
 			else if (event.type == SDL_MOUSEBUTTONUP) {
-				Line l = {x1,x2,y1,y2};
+				Line l = {x1,y1,x2,y2,ich.pen_color};
 				drawn_lines.push_back(l);
 				mouse_pressed = false;
 			}
@@ -108,6 +117,10 @@ int main(int argc, char *argv[])
 			else if (event.type == SDL_MOUSEMOTION && mouse_pressed) {
 				x2 = event.motion.x;
 				y2 = event.motion.y;
+			}
+			// Switch colour.
+			else if (event.type == SDL_KEYDOWN) {
+				ich.pen_toggle();
 			}
 		}
 
